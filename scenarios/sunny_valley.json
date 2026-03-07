@@ -1,0 +1,139 @@
+{
+  "id": "sunny_valley",
+  "name": "Sunny Valley to City",
+  "description": "A solar and wind-rich western valley feeds an eastern city through a constrained transmission corridor. Learn how congestion creates price separation, why the solar node can be cheap while the city stays expensive, and what happens when you upgrade the line.",
+
+  "nodes": [
+    { "id": "N1", "name": "SunnyValley", "x": 120, "y": 300, "zone_id": "WEST" },
+    { "id": "N2", "name": "WindRidge",   "x": 120, "y": 150, "zone_id": "WEST" },
+    { "id": "N3", "name": "HubPoint",   "x": 350, "y": 225, "zone_id": "CENTRAL" },
+    { "id": "N4", "name": "EastCity",   "x": 560, "y": 300, "zone_id": "EAST" },
+    { "id": "N5", "name": "CityPeak",   "x": 560, "y": 150, "zone_id": "EAST" }
+  ],
+
+  "lines": [
+    {
+      "id": "L_N1_N3", "name": "SunnyValley–Hub",
+      "from_node_id": "N1", "to_node_id": "N3",
+      "capacity_mw": 300, "reactance": 0.10,
+      "description": "The constrained export line — teaches congestion when solar peaks"
+    },
+    {
+      "id": "L_N2_N3", "name": "WindRidge–Hub",
+      "from_node_id": "N2", "to_node_id": "N3",
+      "capacity_mw": 500, "reactance": 0.08
+    },
+    {
+      "id": "L_N3_N4", "name": "Hub–EastCity",
+      "from_node_id": "N3", "to_node_id": "N4",
+      "capacity_mw": 800, "reactance": 0.05
+    },
+    {
+      "id": "L_N4_N5", "name": "EastCity–CityPeak",
+      "from_node_id": "N4", "to_node_id": "N5",
+      "capacity_mw": 400, "reactance": 0.12
+    }
+  ],
+
+  "hub": {
+    "id": "HUB1",
+    "name": "Central Hub",
+    "constituent_node_ids": ["N1", "N3", "N4"]
+  },
+
+  "generators": [
+    {
+      "id": "G1", "name": "Sunny Valley Solar", "type": "solar",
+      "node_id": "N1", "capacity_mw": 400, "variable_cost": 0,
+      "profile": [0.00, 0.00, 0.00, 0.00, 0.00, 0.02,
+                  0.12, 0.28, 0.48, 0.68, 0.85, 0.95,
+                  1.00, 0.98, 0.88, 0.72, 0.50, 0.25,
+                  0.08, 0.01, 0.00, 0.00, 0.00, 0.00]
+    },
+    {
+      "id": "G2", "name": "Wind Ridge Wind", "type": "wind",
+      "node_id": "N2", "capacity_mw": 300, "variable_cost": 0,
+      "profile": [0.75, 0.78, 0.80, 0.82, 0.80, 0.75,
+                  0.60, 0.45, 0.38, 0.35, 0.30, 0.28,
+                  0.25, 0.28, 0.32, 0.38, 0.45, 0.52,
+                  0.60, 0.68, 0.72, 0.75, 0.76, 0.75]
+    },
+    {
+      "id": "G3", "name": "Hub Gas CC", "type": "gas_cc",
+      "node_id": "N3", "capacity_mw": 350, "variable_cost": 35,
+      "profile": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    },
+    {
+      "id": "G4", "name": "City Gas Peaker", "type": "gas_peaker",
+      "node_id": "N5", "capacity_mw": 200, "variable_cost": 85,
+      "profile": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    }
+  ],
+
+  "loads": [
+    {
+      "id": "D1", "name": "EastCity Load", "type": "city",
+      "node_id": "N4",
+      "demand_mw": [
+        280, 260, 250, 245, 248, 265,
+        310, 370, 420, 450, 460, 455,
+        445, 440, 445, 455, 470, 500,
+        520, 540, 530, 500, 430, 340
+      ]
+    },
+    {
+      "id": "D2", "name": "CityPeak Industrial", "type": "factory",
+      "node_id": "N5",
+      "demand_mw": [
+        60, 58, 55, 55, 57, 60,
+        65, 72, 78, 80, 82, 80,
+        78, 78, 80, 82, 85, 88,
+        90, 88, 85, 80, 72, 65
+      ]
+    }
+  ],
+
+  "variants": {
+    "base": {
+      "description": "Standard sunny day — shows midday congestion on SunnyValley export line",
+      "overrides": {}
+    },
+    "more_solar": {
+      "description": "Double solar capacity — more curtailment, cheaper SunnyValley node",
+      "overrides": {
+        "generators": {
+          "G1": { "capacity_mw": 700 }
+        }
+      }
+    },
+    "bigger_line": {
+      "description": "Upgrade export line to 600 MW — congestion disappears, prices converge",
+      "overrides": {
+        "lines": {
+          "L_N1_N3": { "capacity_mw": 600 }
+        }
+      }
+    },
+    "hot_evening": {
+      "description": "Extra industrial load in the evening — peaker runs hard, city prices spike",
+      "overrides": {
+        "loads": {
+          "D2": {
+            "demand_mw": [
+              60, 58, 55, 55, 57, 60,
+              65, 72, 78, 80, 82, 80,
+              78, 78, 80, 82, 85, 140,
+              160, 165, 155, 130, 95, 70
+            ]
+          }
+        }
+      }
+    }
+  }
+}
