@@ -14,23 +14,19 @@
   "lines": [
     {
       "id": "L_N1_N3", "name": "SunnyValley–Hub",
-      "from_node_id": "N1", "to_node_id": "N3",
       "capacity_mw": 300, "reactance": 0.10,
       "description": "The constrained export line — teaches congestion when solar peaks"
     },
     {
       "id": "L_N2_N3", "name": "WindRidge–Hub",
-      "from_node_id": "N2", "to_node_id": "N3",
       "capacity_mw": 500, "reactance": 0.08
     },
     {
       "id": "L_N3_N4", "name": "Hub–EastCity",
-      "from_node_id": "N3", "to_node_id": "N4",
       "capacity_mw": 800, "reactance": 0.05
     },
     {
       "id": "L_N4_N5", "name": "EastCity–CityPeak",
-      "from_node_id": "N4", "to_node_id": "N5",
       "capacity_mw": 400, "reactance": 0.12
     }
   ],
@@ -104,29 +100,16 @@
     "height": 9,
     "origin": { "col": -5, "row": -4 },
 
-    "tile_defs": {
-      "1":  { "type": "line",        "line_id": "L_N1_N3" },
-      "2":  { "type": "line",        "line_id": "L_N2_N3" },
-      "3":  { "type": "line",        "line_id": "L_N3_N4" },
-      "4":  { "type": "line",        "line_id": "L_N4_N5" },
-      "9":  { "type": "substation"                        },
-      "11": { "type": "node",        "node_id": "N1"      },
-      "12": { "type": "node",        "node_id": "N2"      },
-      "13": { "type": "node",        "node_id": "N3"      },
-      "14": { "type": "node",        "node_id": "N4"      },
-      "15": { "type": "node",        "node_id": "N5"      }
-    },
-
     "grid": [
-      [0, 201,  0, 0, 0,   0, 0, 0, 0,  0,   0],
-      [0,  11,  1, 0, 0,   0, 0, 0, 0,  0,   0],
-      [0,   0,  1, 0, 0,   0, 0, 4, 4, 14, 204],
-      [0,   0,  1, 0, 0, 203, 0, 4, 0,  0,   0],
-      [0,   0,  3, 3, 3,  13, 3, 3, 3,  9, 301],
-      [0,   0,  2, 0, 0,   0, 0, 4, 0,  0,   0],
-      [0,  12,  2, 0, 0,   0, 0, 4, 4, 15, 302],
-      [0, 202,  0, 0, 0,   0, 0, 0, 0,  0,   0],
-      [0,   0,  0, 0, 0,   0, 0, 0, 0,  0,   0]
+      [0,    "G1",      0,          0,          0,    0,    0,          0,          0,          0,    0   ],
+      [0,    "N1",      "L_N1_N3",  0,          0,    0,    0,          0,          0,          0,    0   ],
+      [0,    0,         "L_N1_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N4", "G4"],
+      [0,    0,         "L_N1_N3",  0,          0,    "G3", 0,          "L_N4_N5",  0,          0,    0   ],
+      [0,    0,         "L_N3_N4",  "L_N3_N4",  "L_N3_N4", "N3", "L_N3_N4", "L_N3_N4", "L_N3_N4", "substation", "D1"],
+      [0,    0,         "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  0,          0,    0   ],
+      [0,    "N2",      "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N5", "D2"],
+      [0,    "G2",      0,          0,          0,    0,    0,          0,          0,          0,    0   ],
+      [0,    0,         0,          0,          0,    0,    0,          0,          0,          0,    0   ]
     ],
 
     "zone_defs": {
@@ -145,16 +128,7 @@
       [1,1,1,1,2,2,2,3,3,3,3],
       [1,1,1,1,2,2,2,3,3,3,3],
       [1,1,1,1,2,2,2,3,3,3,3]
-    ],
-
-    "entities": {
-      "201": { "type": "generator", "asset_id": "G1", "prefab": "SolarPrefab" },
-      "202": { "type": "generator", "asset_id": "G2", "prefab": "WindPrefab" },
-      "203": { "type": "generator", "asset_id": "G3", "prefab": "GasCCPrefab" },
-      "204": { "type": "generator", "asset_id": "G4", "prefab": "GasPeakerPrefab" },
-      "301": { "type": "load", "asset_id": "D1", "prefab": "CityLoadPrefab" },
-      "302": { "type": "load", "asset_id": "D2", "prefab": "CityLoadPrefab" }
-    }
+    ]
   },
 
   "variants": {
