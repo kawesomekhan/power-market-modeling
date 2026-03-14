@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import copy
 from pathlib import Path
+from typing import Optional
 from ..core.entities import (
     Scenario, Node, Line, GeneratorAsset, LoadEntity, Hub
 )
@@ -91,6 +92,37 @@ def _apply_variant(data: dict, variant: str) -> dict:
                 load_data.update(overrides["loads"][did])
 
     return data
+
+
+def _infer_node_positions(map_data: dict, node_ids: set[str]) -> dict[str, tuple[int, int]]:
+    """
+    Scan the grid and return {node_id: (abs_col, abs_row)} for every node tile.
+    Used to derive Node.x / Node.y when they are absent from the JSON.
+    """
+    if not map_data:
+        return {}
+    origin_col = map_data["origin"]["col"]
+    origin_row = map_data["origin"]["row"]
+    positions: dict[str, tuple[int, int]] = {}
+    for row_idx, row in enumerate(map_data.get("grid", [])):
+        for col_idx, cell in enumerate(row):
+            key = str(cell) if cell else ""
+            if key in node_ids:
+                positions[key] = (origin_col + col_idx, origin_row + row_idx)
+    return positions
+
+
+def _zone_id_at(col: int, row: int, map_data: dict) -> Optional[str]:
+    """Return the zone_id for an absolute grid position, or None if out of bounds."""
+    origin_col = map_data["origin"]["col"]
+    origin_row = map_data["origin"]["row"]
+    col_idx = col - origin_col
+    row_idx = row - origin_row
+    zones     = map_data.get("zones", [])
+    zone_defs = map_data.get("zone_defs", {})
+    if 0 <= row_idx < len(zones) and 0 <= col_idx < len(zones[row_idx]):
+        return zone_defs.get(str(zones[row_idx][col_idx]))
+    return None
 
 
 def _derive_line_connectivity(line_id: str, node_ids: set[str]) -> tuple[str, str]:
@@ -207,16 +239,24 @@ def _parse_map(
 
 
 def _build_scenario(data: dict) -> Scenario:
-    nodes = [
-        Node(
-            id=n["id"],
+    map_data    = data.get("map", {})
+    node_id_set = {n["id"] for n in data["nodes"]}
+
+    # Derive positions and zone IDs from the grid when not supplied in JSON.
+    node_positions = _infer_node_positions(map_data, node_id_set)
+
+    nodes = []
+    for n in data["nodes"]:
+        nid  = n["id"]
+        col, row = node_positions.get(nid, (n.get("x"), n.get("y")))
+        zone_id  = n.get("zone_id") or _zone_id_at(col, row, map_data)
+        nodes.append(Node(
+            id=nid,
             name=n["name"],
-            x=n["x"],
-            y=n["y"],
-            zone_id=n.get("zone_id"),
-        )
-        for n in data["nodes"]
-    ]
+            x=col,
+            y=row,
+            zone_id=zone_id,
+        ))
 
     node_id_set = {n.id for n in nodes}
 

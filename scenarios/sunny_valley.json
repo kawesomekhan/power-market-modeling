@@ -4,11 +4,12 @@
   "description": "A solar and wind-rich western valley feeds an eastern city through a constrained transmission corridor. Learn how congestion creates price separation, why the solar node can be cheap while the city stays expensive, and what happens when you upgrade the line.",
 
   "nodes": [
-    { "id": "N1", "name": "SunnyValley", "x": -4, "y": -2, "zone_id": "WEST" },
-    { "id": "N2", "name": "WindRidge",   "x": -4, "y":  2, "zone_id": "WEST" },
-    { "id": "N3", "name": "HubPoint",    "x":  0, "y":  0, "zone_id": "CENTRAL" },
-    { "id": "N4", "name": "EastCity",    "x":  4, "y": -2, "zone_id": "EAST" },
-    { "id": "N5", "name": "CityPeak",    "x":  4, "y":  2, "zone_id": "EAST" }
+    { "id": "N1", "name": "SunnyValley" },
+    { "id": "N2", "name": "WindRidge"   },
+    { "id": "N3", "name": "HubPoint"    },
+    { "id": "N4", "name": "EastCity"    },
+    { "id": "N5", "name": "CityPeak"    },
+    { "id": "N6", "name": "EastJunction" }
   ],
 
   "lines": [
@@ -64,7 +65,7 @@
     },
     {
       "id": "G4", "name": "City Gas Peaker", "type": "gas_peaker",
-      "node_id": "N5", "capacity_mw": 200, "variable_cost": 85,
+      "node_id": "N4", "capacity_mw": 200, "variable_cost": 85,
       "profile": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
                   1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
                   1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
@@ -75,7 +76,7 @@
   "loads": [
     {
       "id": "D1", "name": "EastCity Load", "type": "city",
-      "node_id": "N4",
+      "node_id": "N6",
       "demand_mw": [
         280, 260, 250, 245, 248, 265,
         310, 370, 420, 450, 460, 455,
@@ -105,7 +106,7 @@
       [0,    "N1",      "L_N1_N3",  0,          0,    0,    0,          0,          0,          0,    0   ],
       [0,    0,         "L_N1_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N4", "G4"],
       [0,    0,         "L_N1_N3",  0,          0,    "G3", 0,          "L_N4_N5",  0,          0,    0   ],
-      [0,    0,         "L_N3_N4",  "L_N3_N4",  "L_N3_N4", "N3", "L_N3_N4", "L_N3_N4", "L_N3_N4", "substation", "D1"],
+      [0,    0,         "L_N3_N4",  "L_N3_N4",  "L_N3_N4", "N3", "L_N3_N4", "L_N3_N4", "L_N3_N4", "N6", "D1"],
       [0,    0,         "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  0,          0,    0   ],
       [0,    "N2",      "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N5", "D2"],
       [0,    "G2",      0,          0,          0,    0,    0,          0,          0,          0,    0   ],
