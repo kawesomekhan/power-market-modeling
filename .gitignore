@@ -29,3 +29,5 @@ Thumbs.db
 
 # Claude plans (local only)
 .claude/plans/
+.claude/settings.local.json
+.claude/worktrees

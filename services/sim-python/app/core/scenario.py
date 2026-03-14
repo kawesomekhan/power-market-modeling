@@ -213,6 +213,7 @@ def _build_scenario(data: dict) -> Scenario:
         generators=generators,
         loads=loads,
         hub=hub,
+        grid_tiles=data.get("grid", []),
     )
     scenario.build_index()
     scenario.grid_tiles, scenario.zone_tiles = _parse_map(data.get("map", {}), nodes)
