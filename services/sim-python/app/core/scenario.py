@@ -77,9 +77,12 @@ def _apply_variant(data: dict, variant: str) -> dict:
     return data
 
 
-def _parse_map(map_data: dict) -> tuple[list[dict], list[dict]]:
+def _parse_map(map_data: dict, nodes: list) -> tuple[list[dict], list[dict]]:
     """
     Convert a 'map' object to flat tile lists.
+
+    node_id is auto-derived: any tile whose (col, row) matches a node's (x, y)
+    gets that node's id wired in — no need to store it in tile_defs or entities.
 
     Returns:
         grid_tiles: spawnable objects (prefabs, nodes, assets)
@@ -94,6 +97,9 @@ def _parse_map(map_data: dict) -> tuple[list[dict], list[dict]]:
     entities   = map_data.get("entities", {})
     zone_defs  = map_data.get("zone_defs", {})
 
+    # Build cell → node_id lookup from node grid coordinates.
+    node_by_cell: dict[tuple[int, int], str] = {(n.x, n.y): n.id for n in nodes}
+
     grid_tiles = []
     zone_tiles = []
 
@@ -103,24 +109,26 @@ def _parse_map(map_data: dict) -> tuple[list[dict], list[dict]]:
             if cell == 0:
                 continue
             key = str(cell)
-            col = origin_col + col_idx
+            col       = origin_col + col_idx
             row_coord = origin_row + row_idx
             if key in tile_defs:
                 grid_tiles.append({
                     "col":      col,
                     "row":      row_coord,
                     "prefab":   tile_defs[key],
-                    "node_id":  None,
+                    "node_id":  node_by_cell.get((col, row_coord)),
                     "asset_id": None,
                 })
             elif key in entities:
-                entity = entities[key]
+                entity    = entities[key]
+                asset_id  = entity.get("asset_id")
                 grid_tiles.append({
                     "col":      col,
                     "row":      row_coord,
                     "prefab":   entity["prefab"],
-                    "node_id":  entity.get("node_id"),
-                    "asset_id": entity.get("asset_id"),
+                    # Assets (generators/loads) sit adjacent to nodes — never wire node_id.
+                    "node_id":  None,
+                    "asset_id": asset_id,
                 })
 
     # Zone background layer.
@@ -207,7 +215,7 @@ def _build_scenario(data: dict) -> Scenario:
         hub=hub,
     )
     scenario.build_index()
-    scenario.grid_tiles, scenario.zone_tiles = _parse_map(data.get("map", {}))
+    scenario.grid_tiles, scenario.zone_tiles = _parse_map(data.get("map", {}), nodes)
     return scenario
 
 
