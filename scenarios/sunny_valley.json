@@ -4,11 +4,11 @@
   "description": "A solar and wind-rich western valley feeds an eastern city through a constrained transmission corridor. Learn how congestion creates price separation, why the solar node can be cheap while the city stays expensive, and what happens when you upgrade the line.",
 
   "nodes": [
-    { "id": "N1", "name": "SunnyValley", "x": 120, "y": 300, "zone_id": "WEST" },
-    { "id": "N2", "name": "WindRidge",   "x": 120, "y": 150, "zone_id": "WEST" },
-    { "id": "N3", "name": "HubPoint",   "x": 350, "y": 225, "zone_id": "CENTRAL" },
-    { "id": "N4", "name": "EastCity",   "x": 560, "y": 300, "zone_id": "EAST" },
-    { "id": "N5", "name": "CityPeak",   "x": 560, "y": 150, "zone_id": "EAST" }
+    { "id": "N1", "name": "SunnyValley", "x": -4, "y": -2, "zone_id": "WEST" },
+    { "id": "N2", "name": "WindRidge",   "x": -4, "y":  2, "zone_id": "WEST" },
+    { "id": "N3", "name": "HubPoint",    "x":  0, "y":  0, "zone_id": "CENTRAL" },
+    { "id": "N4", "name": "EastCity",    "x":  4, "y": -2, "zone_id": "EAST" },
+    { "id": "N5", "name": "CityPeak",    "x":  4, "y":  2, "zone_id": "EAST" }
   ],
 
   "lines": [
@@ -115,17 +115,21 @@
       "8":  "LineTJNEPrefab",
       "9":  "LineTJNWPrefab",
       "10": "LineTJSEPrefab",
-      "11": "LineTJSWPrefab"
+      "11": "LineTJSWPrefab",
+      "12": "SubstationNEPrefab",
+      "13": "SubstationNWPrefab",
+      "14": "SubstationSEPrefab",
+      "15": "SubstationSWPrefab"
     },
 
     "grid": [
       [0, 201,  0, 0, 0,   0, 0, 0, 0,   0,   0],
       [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
-      [0, 101,  0, 0, 0, 203, 0, 0, 0, 104,   0],
+      [0,  12,  0, 0, 0, 203, 0, 0, 0,  13,   0],
       [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
-      [0, 202,  0, 0, 0, 103, 0, 0, 0, 204, 301],
+      [0, 202,  0, 0, 0,  12, 0, 0, 0, 204, 301],
       [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
-      [0, 102,  0, 0, 0,   0, 0, 0, 0, 105, 302],
+      [0,  14,  0, 0, 0,   0, 0, 0, 0,  15, 302],
       [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
       [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0]
     ],
@@ -149,11 +153,6 @@
     ],
 
     "entities": {
-      "101": { "type": "substation", "node_id": "N1", "prefab": "SubstationNEPrefab" },
-      "102": { "type": "substation", "node_id": "N2", "prefab": "SubstationSEPrefab" },
-      "103": { "type": "substation", "node_id": "N3", "prefab": "SubstationNEPrefab" },
-      "104": { "type": "substation", "node_id": "N4", "prefab": "SubstationNWPrefab" },
-      "105": { "type": "substation", "node_id": "N5", "prefab": "SubstationSWPrefab" },
       "201": { "type": "generator", "asset_id": "G1", "prefab": "SolarPrefab" },
       "202": { "type": "generator", "asset_id": "G2", "prefab": "WindPrefab" },
       "203": { "type": "generator", "asset_id": "G3", "prefab": "GasCCPrefab" },

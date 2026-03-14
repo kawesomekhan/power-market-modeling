@@ -21,8 +21,8 @@ class Node:
     """A pricing location / bus on the network."""
     id: str
     name: str
-    x: float          # Map x-coordinate (SVG units)
-    y: float          # Map y-coordinate (SVG units)
+    x: int            # Isometric grid column (col, relative to origin N3=0)
+    y: int            # Isometric grid row    (row, relative to origin N3=0)
     zone_id: Optional[str] = None
 
 
