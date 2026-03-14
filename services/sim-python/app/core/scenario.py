@@ -77,58 +77,66 @@ def _apply_variant(data: dict, variant: str) -> dict:
     return data
 
 
-def _parse_map(map_data: dict) -> list[dict]:
-    """Convert a layered 2D 'map' object to a flat list of grid tile dicts."""
+def _parse_map(map_data: dict) -> tuple[list[dict], list[dict]]:
+    """
+    Convert a 'map' object to flat tile lists.
+
+    Returns:
+        grid_tiles: spawnable objects (prefabs, nodes, assets)
+        zone_tiles: background region cells (zone_id only)
+    """
     if not map_data:
-        return []
+        return [], []
 
     origin_col = map_data["origin"]["col"]
     origin_row = map_data["origin"]["row"]
     tile_defs  = map_data.get("tile_defs", {})
     entities   = map_data.get("entities", {})
+    zone_defs  = map_data.get("zone_defs", {})
 
-    tiles = []
+    grid_tiles = []
+    zone_tiles = []
 
-    for row_idx, row in enumerate(map_data.get("lines", [])):
+    # Single unified grid: tile_defs lookup first, entities fallback.
+    for row_idx, row in enumerate(map_data.get("grid", [])):
         for col_idx, cell in enumerate(row):
             if cell == 0:
                 continue
             key = str(cell)
+            col = origin_col + col_idx
+            row_coord = origin_row + row_idx
             if key in tile_defs:
-                # Plain line piece (corner, straight, T-junction)
-                tiles.append({
-                    "col":      origin_col + col_idx,
-                    "row":      origin_row + row_idx,
+                grid_tiles.append({
+                    "col":      col,
+                    "row":      row_coord,
                     "prefab":   tile_defs[key],
                     "node_id":  None,
                     "asset_id": None,
                 })
             elif key in entities:
-                # Substation — a line endpoint that is also a logical node
                 entity = entities[key]
-                tiles.append({
-                    "col":      origin_col + col_idx,
-                    "row":      origin_row + row_idx,
+                grid_tiles.append({
+                    "col":      col,
+                    "row":      row_coord,
                     "prefab":   entity["prefab"],
                     "node_id":  entity.get("node_id"),
                     "asset_id": entity.get("asset_id"),
                 })
 
-    for row_idx, row in enumerate(map_data.get("structures", [])):
+    # Zone background layer.
+    for row_idx, row in enumerate(map_data.get("zones", [])):
         for col_idx, cell in enumerate(row):
             if cell == 0:
                 continue
-            entity = entities.get(str(cell))
-            if entity:
-                tiles.append({
-                    "col":      origin_col + col_idx,
-                    "row":      origin_row + row_idx,
-                    "prefab":   entity["prefab"],
-                    "node_id":  entity.get("node_id"),
-                    "asset_id": entity.get("asset_id"),
+            zone_id = zone_defs.get(str(cell))
+            if zone_id:
+                zone_tiles.append({
+                    "col":     origin_col + col_idx,
+                    "row":     origin_row + row_idx,
+                    "zone_id": zone_id,
                 })
 
-    return tiles
+    return grid_tiles, zone_tiles
 
 
 def _build_scenario(data: dict) -> Scenario:
@@ -199,7 +207,7 @@ def _build_scenario(data: dict) -> Scenario:
         hub=hub,
     )
     scenario.build_index()
-    scenario.grid_tiles = _parse_map(data.get("map", {}))
+    scenario.grid_tiles, scenario.zone_tiles = _parse_map(data.get("map", {}))
     return scenario
 
 
