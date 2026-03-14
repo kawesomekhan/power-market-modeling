@@ -93,14 +93,25 @@ def _parse_map(map_data: dict) -> list[dict]:
         for col_idx, cell in enumerate(row):
             if cell == 0:
                 continue
-            prefab = tile_defs.get(str(cell))
-            if prefab:
+            key = str(cell)
+            if key in tile_defs:
+                # Plain line piece (corner, straight, T-junction)
                 tiles.append({
                     "col":      origin_col + col_idx,
                     "row":      origin_row + row_idx,
-                    "prefab":   prefab,
+                    "prefab":   tile_defs[key],
                     "node_id":  None,
                     "asset_id": None,
+                })
+            elif key in entities:
+                # Substation — a line endpoint that is also a logical node
+                entity = entities[key]
+                tiles.append({
+                    "col":      origin_col + col_idx,
+                    "row":      origin_row + row_idx,
+                    "prefab":   entity["prefab"],
+                    "node_id":  entity.get("node_id"),
+                    "asset_id": entity.get("asset_id"),
                 })
 
     for row_idx, row in enumerate(map_data.get("structures", [])):
