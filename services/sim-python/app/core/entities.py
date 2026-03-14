@@ -127,6 +127,10 @@ class Scenario:
     loads: list[LoadEntity]
     hub: Hub
 
+    # Flat tile lists produced by _parse_map(); consumed by the /simulate API response.
+    grid_tiles: list = field(default_factory=list)
+    zone_tiles: list = field(default_factory=list)
+
     # Convenience lookups (populated by scenario.py after construction)
     _node_index: dict[str, Node] = field(default_factory=dict, repr=False)
     _line_index: dict[str, Line] = field(default_factory=dict, repr=False)
