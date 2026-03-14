@@ -99,6 +99,64 @@
     }
   ],
 
+  "map": {
+    "width": 11,
+    "height": 9,
+    "origin": { "col": -5, "row": -4 },
+
+    "tile_defs": {
+      "1":  "LineCEPrefab",
+      "2":  "LineCWPrefab",
+      "3":  "LineCNPrefab",
+      "4":  "LineCSPrefab",
+      "5":  "LineNWPrefab",
+      "6":  "LineSEPrefab",
+      "7":  "LineTJBasePrefab",
+      "8":  "LineTJNEPrefab",
+      "9":  "LineTJNWPrefab",
+      "10": "LineTJSEPrefab",
+      "11": "LineTJSWPrefab"
+    },
+
+    "lines": [
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0]
+    ],
+
+    "structures": [
+      [0, 201,  0, 0, 0,   0, 0, 0, 0,   0,   0],
+      [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
+      [0, 101,  0, 0, 0, 203, 0, 0, 0, 104,   0],
+      [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
+      [0, 202,  0, 0, 0, 103, 0, 0, 0, 204, 301],
+      [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
+      [0, 102,  0, 0, 0,   0, 0, 0, 0, 105, 302],
+      [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0],
+      [0,   0,  0, 0, 0,   0, 0, 0, 0,   0,   0]
+    ],
+
+    "entities": {
+      "101": { "type": "substation", "node_id": "N1", "prefab": "SubstationNEPrefab" },
+      "102": { "type": "substation", "node_id": "N2", "prefab": "SubstationSEPrefab" },
+      "103": { "type": "substation", "node_id": "N3", "prefab": "SubstationNEPrefab" },
+      "104": { "type": "substation", "node_id": "N4", "prefab": "SubstationNWPrefab" },
+      "105": { "type": "substation", "node_id": "N5", "prefab": "SubstationSWPrefab" },
+      "201": { "type": "generator", "asset_id": "G1", "prefab": "SolarPrefab" },
+      "202": { "type": "generator", "asset_id": "G2", "prefab": "WindPrefab" },
+      "203": { "type": "generator", "asset_id": "G3", "prefab": "GasCCPrefab" },
+      "204": { "type": "generator", "asset_id": "G4", "prefab": "GasPeakerPrefab" },
+      "301": { "type": "load", "asset_id": "D1", "prefab": "CityLoadPrefab" },
+      "302": { "type": "load", "asset_id": "D2", "prefab": "CityLoadPrefab" }
+    }
+  },
+
   "variants": {
     "base": {
       "description": "Standard sunny day — shows midday congestion on SunnyValley export line",

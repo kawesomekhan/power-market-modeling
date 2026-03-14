@@ -163,6 +163,7 @@ def simulate(
         },
         "hours": [_hour_result_to_dict(hr) for hr in sim.hours],
         "daily_pnl": compute_asset_daily_pnl(sc, sim.hours),
+        "grid_tiles": sc.grid_tiles,
     }
 
 

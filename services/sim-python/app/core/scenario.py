@@ -77,6 +77,49 @@ def _apply_variant(data: dict, variant: str) -> dict:
     return data
 
 
+def _parse_map(map_data: dict) -> list[dict]:
+    """Convert a layered 2D 'map' object to a flat list of grid tile dicts."""
+    if not map_data:
+        return []
+
+    origin_col = map_data["origin"]["col"]
+    origin_row = map_data["origin"]["row"]
+    tile_defs  = map_data.get("tile_defs", {})
+    entities   = map_data.get("entities", {})
+
+    tiles = []
+
+    for row_idx, row in enumerate(map_data.get("lines", [])):
+        for col_idx, cell in enumerate(row):
+            if cell == 0:
+                continue
+            prefab = tile_defs.get(str(cell))
+            if prefab:
+                tiles.append({
+                    "col":      origin_col + col_idx,
+                    "row":      origin_row + row_idx,
+                    "prefab":   prefab,
+                    "node_id":  None,
+                    "asset_id": None,
+                })
+
+    for row_idx, row in enumerate(map_data.get("structures", [])):
+        for col_idx, cell in enumerate(row):
+            if cell == 0:
+                continue
+            entity = entities.get(str(cell))
+            if entity:
+                tiles.append({
+                    "col":      origin_col + col_idx,
+                    "row":      origin_row + row_idx,
+                    "prefab":   entity["prefab"],
+                    "node_id":  entity.get("node_id"),
+                    "asset_id": entity.get("asset_id"),
+                })
+
+    return tiles
+
+
 def _build_scenario(data: dict) -> Scenario:
     nodes = [
         Node(
@@ -145,6 +188,7 @@ def _build_scenario(data: dict) -> Scenario:
         hub=hub,
     )
     scenario.build_index()
+    scenario.grid_tiles = _parse_map(data.get("map", {}))
     return scenario
 
 
