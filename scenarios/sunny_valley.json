@@ -23,8 +23,12 @@
       "capacity_mw": 500, "reactance": 0.08
     },
     {
-      "id": "L_N3_N4", "name": "Hub–EastCity",
+      "id": "L_N3_N6", "name": "Hub–EastJunction",
       "capacity_mw": 800, "reactance": 0.05
+    },
+    {
+      "id": "L_N6_N4", "name": "EastJunction–EastCity",
+      "capacity_mw": 800, "reactance": 0.01
     },
     {
       "id": "L_N4_N5", "name": "EastCity–CityPeak",
@@ -106,7 +110,7 @@
       [0,    "N1",      "L_N1_N3",  0,          0,    0,    0,          0,          0,          0,    0   ],
       [0,    0,         "L_N1_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N4", "G4"],
       [0,    0,         "L_N1_N3",  0,          0,    "G3", 0,          "L_N4_N5",  0,          0,    0   ],
-      [0,    0,         "L_N3_N4",  "L_N3_N4",  "L_N3_N4", "N3", "L_N3_N4", "L_N3_N4", "L_N3_N4", "N6", "D1"],
+      [0,    0,         "L_N3_N6",  "L_N3_N6",  "L_N3_N6", "N3", "L_N3_N6", "L_N3_N6", "L_N3_N6", "N6", "D1"],
       [0,    0,         "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  0,          0,    0   ],
       [0,    "N2",      "L_N2_N3",  0,          0,    0,    0,          "L_N4_N5",  "L_N4_N5",  "N5", "D2"],
       [0,    "G2",      0,          0,          0,    0,    0,          0,          0,          0,    0   ],
