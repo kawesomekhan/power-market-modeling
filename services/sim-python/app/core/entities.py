@@ -21,9 +21,9 @@ class Node:
     """A pricing location / bus on the network."""
     id: str
     name: str
-    x: int            # Isometric grid column (col, relative to origin N3=0)
-    y: int            # Isometric grid row    (row, relative to origin N3=0)
-    zone_id: Optional[str] = None
+    x: Optional[int] = None   # Isometric grid column — derived from map grid if absent
+    y: Optional[int] = None   # Isometric grid row    — derived from map grid if absent
+    zone_id: Optional[str] = None  # Derived from map zones if absent
 
 
 @dataclass

@@ -11,12 +11,29 @@ from __future__ import annotations
 import json
 import copy
 from pathlib import Path
+from typing import Optional
 from ..core.entities import (
     Scenario, Node, Line, GeneratorAsset, LoadEntity, Hub
 )
 
 # Path to the scenarios directory (two levels up from this file's package)
 _SCENARIOS_DIR = Path(__file__).parents[4] / "scenarios"
+
+# Prefab names derived from generator/load type
+_GEN_PREFAB = {
+    "solar":       "SolarPrefab",
+    "wind":        "WindPrefab",
+    "gas_cc":      "GasCCPrefab",
+    "gas_peaker":  "GasPeakerPrefab",
+    "hydro":       "SolarPrefab",    # fallback
+    "battery":     "SolarPrefab",    # fallback
+}
+_LOAD_PREFAB = {
+    "city":        "CityLoadPrefab",
+    "factory":     "CityLoadPrefab",
+    "town":        "CityLoadPrefab",
+    "data_center": "CityLoadPrefab",
+}
 
 
 def load_scenario(scenario_id: str, variant: str = "base") -> Scenario:
@@ -77,15 +94,74 @@ def _apply_variant(data: dict, variant: str) -> dict:
     return data
 
 
-def _parse_map(map_data: dict, nodes: list) -> tuple[list[dict], list[dict]]:
+def _infer_node_positions(map_data: dict, node_ids: set[str]) -> dict[str, tuple[int, int]]:
+    """
+    Scan the grid and return {node_id: (abs_col, abs_row)} for every node tile.
+    Used to derive Node.x / Node.y when they are absent from the JSON.
+    """
+    if not map_data:
+        return {}
+    origin_col = map_data["origin"]["col"]
+    origin_row = map_data["origin"]["row"]
+    positions: dict[str, tuple[int, int]] = {}
+    for row_idx, row in enumerate(map_data.get("grid", [])):
+        for col_idx, cell in enumerate(row):
+            key = str(cell) if cell else ""
+            if key in node_ids:
+                positions[key] = (origin_col + col_idx, origin_row + row_idx)
+    return positions
+
+
+def _zone_id_at(col: int, row: int, map_data: dict) -> Optional[str]:
+    """Return the zone_id for an absolute grid position, or None if out of bounds."""
+    origin_col = map_data["origin"]["col"]
+    origin_row = map_data["origin"]["row"]
+    col_idx = col - origin_col
+    row_idx = row - origin_row
+    zones     = map_data.get("zones", [])
+    zone_defs = map_data.get("zone_defs", {})
+    if 0 <= row_idx < len(zones) and 0 <= col_idx < len(zones[row_idx]):
+        return zone_defs.get(str(zones[row_idx][col_idx]))
+    return None
+
+
+def _derive_line_connectivity(line_id: str, node_ids: set[str]) -> tuple[str, str]:
+    """
+    Derive from/to node IDs from the naming convention "L_<from>_<to>".
+
+    Raises ValueError if the ID doesn't follow the convention or the extracted
+    node IDs are not in the scenario's node set.
+    """
+    parts = line_id.split("_")
+    if len(parts) == 3 and parts[0] == "L" and parts[1] in node_ids and parts[2] in node_ids:
+        return parts[1], parts[2]
+    raise ValueError(
+        f"Cannot derive connectivity for line '{line_id}'. "
+        f"Either add 'from_node_id'/'to_node_id' to the line definition, "
+        f"or use naming convention 'L_<from>_<to>' (e.g. 'L_N1_N3')."
+    )
+
+
+def _parse_map(
+    map_data: dict,
+    node_ids: set[str],
+    line_ids: set[str],
+    generators: list,
+    loads: list,
+) -> tuple[list[dict], list[dict]]:
     """
     Convert a 'map' object to flat tile lists.
 
-    node_id is auto-derived: any tile whose (col, row) matches a node's (x, y)
-    gets that node's id wired in — no need to store it in tile_defs or entities.
+    Grid cells hold entity/topology IDs directly as strings:
+      - Node ID  (e.g. "N1")          → prefab="substation", node_id=<id>
+      - Line ID  (e.g. "L_N1_N3")     → prefab="line",        line_id=<id>
+      - Generator ID (e.g. "G1")       → prefab from generator type, asset_id=<id>
+      - Load ID  (e.g. "D1")           → prefab from load type,      asset_id=<id>
+      - "substation"                   → prefab="substation", no ids (visual waypoint)
+      - 0 / null                       → empty cell, skipped
 
     Returns:
-        grid_tiles: spawnable objects (prefabs, nodes, assets)
+        grid_tiles: spawnable objects (prefab, node_id, line_id, asset_id)
         zone_tiles: background region cells (zone_id only)
     """
     if not map_data:
@@ -93,45 +169,60 @@ def _parse_map(map_data: dict, nodes: list) -> tuple[list[dict], list[dict]]:
 
     origin_col = map_data["origin"]["col"]
     origin_row = map_data["origin"]["row"]
-    tile_defs  = map_data.get("tile_defs", {})
-    entities   = map_data.get("entities", {})
-    zone_defs  = map_data.get("zone_defs", {})
 
-    # Build cell → node_id lookup from node grid coordinates.
-    node_by_cell: dict[tuple[int, int], str] = {(n.x, n.y): n.id for n in nodes}
+    gen_by_id  = {g.id: g for g in generators}
+    load_by_id = {l.id: l for l in loads}
 
     grid_tiles = []
     zone_tiles = []
 
-    # Single unified grid: tile_defs lookup first, entities fallback.
     for row_idx, row in enumerate(map_data.get("grid", [])):
         for col_idx, cell in enumerate(row):
-            if cell == 0:
+            if not cell or cell == 0:
                 continue
-            key = str(cell)
+            key       = str(cell)
             col       = origin_col + col_idx
             row_coord = origin_row + row_idx
-            if key in tile_defs:
+
+            if key in node_ids:
                 grid_tiles.append({
-                    "col":      col,
-                    "row":      row_coord,
-                    "prefab":   tile_defs[key],
-                    "node_id":  node_by_cell.get((col, row_coord)),
-                    "asset_id": None,
+                    "col": col, "row": row_coord,
+                    "prefab": "substation",
+                    "node_id": key, "line_id": None, "asset_id": None,
                 })
-            elif key in entities:
-                entity    = entities[key]
-                asset_id  = entity.get("asset_id")
+            elif key in line_ids:
                 grid_tiles.append({
-                    "col":      col,
-                    "row":      row_coord,
-                    "prefab":   entity["prefab"],
-                    # Assets (generators/loads) sit adjacent to nodes — never wire node_id.
-                    "node_id":  None,
-                    "asset_id": asset_id,
+                    "col": col, "row": row_coord,
+                    "prefab": "line",
+                    "node_id": None, "line_id": key, "asset_id": None,
                 })
+            elif key == "substation":
+                # Visual-only waypoint substation (no node_id)
+                grid_tiles.append({
+                    "col": col, "row": row_coord,
+                    "prefab": "substation",
+                    "node_id": None, "line_id": None, "asset_id": None,
+                })
+            elif key in gen_by_id:
+                g = gen_by_id[key]
+                prefab = _GEN_PREFAB.get(g.type, "SolarPrefab")
+                grid_tiles.append({
+                    "col": col, "row": row_coord,
+                    "prefab": prefab,
+                    "node_id": None, "line_id": None, "asset_id": key,
+                })
+            elif key in load_by_id:
+                l = load_by_id[key]
+                prefab = _LOAD_PREFAB.get(l.type, "CityLoadPrefab")
+                grid_tiles.append({
+                    "col": col, "row": row_coord,
+                    "prefab": prefab,
+                    "node_id": None, "line_id": None, "asset_id": key,
+                })
+            # else: unknown key — skip silently
 
     # Zone background layer.
+    zone_defs = map_data.get("zone_defs", {})
     for row_idx, row in enumerate(map_data.get("zones", [])):
         for col_idx, cell in enumerate(row):
             if cell == 0:
@@ -148,29 +239,42 @@ def _parse_map(map_data: dict, nodes: list) -> tuple[list[dict], list[dict]]:
 
 
 def _build_scenario(data: dict) -> Scenario:
-    nodes = [
-        Node(
-            id=n["id"],
-            name=n["name"],
-            x=n["x"],
-            y=n["y"],
-            zone_id=n.get("zone_id"),
-        )
-        for n in data["nodes"]
-    ]
+    map_data    = data.get("map", {})
+    node_id_set = {n["id"] for n in data["nodes"]}
 
-    lines = [
-        Line(
+    # Derive positions and zone IDs from the grid when not supplied in JSON.
+    node_positions = _infer_node_positions(map_data, node_id_set)
+
+    nodes = []
+    for n in data["nodes"]:
+        nid  = n["id"]
+        col, row = node_positions.get(nid, (n.get("x"), n.get("y")))
+        zone_id  = n.get("zone_id") or _zone_id_at(col, row, map_data)
+        nodes.append(Node(
+            id=nid,
+            name=n["name"],
+            x=col,
+            y=row,
+            zone_id=zone_id,
+        ))
+
+    node_id_set = {n.id for n in nodes}
+
+    lines = []
+    for l in data["lines"]:
+        from_id = l.get("from_node_id")
+        to_id   = l.get("to_node_id")
+        if from_id is None or to_id is None:
+            from_id, to_id = _derive_line_connectivity(l["id"], node_id_set)
+        lines.append(Line(
             id=l["id"],
             name=l["name"],
-            from_node_id=l["from_node_id"],
-            to_node_id=l["to_node_id"],
+            from_node_id=from_id,
+            to_node_id=to_id,
             capacity_mw=l["capacity_mw"],
             reactance=l["reactance"],
             outage=l.get("outage", False),
-        )
-        for l in data["lines"]
-    ]
+        ))
 
     generators = [
         GeneratorAsset(
@@ -213,10 +317,17 @@ def _build_scenario(data: dict) -> Scenario:
         generators=generators,
         loads=loads,
         hub=hub,
-        grid_tiles=data.get("grid", []),
     )
     scenario.build_index()
-    scenario.grid_tiles, scenario.zone_tiles = _parse_map(data.get("map", {}), nodes)
+
+    line_id_set = {l.id for l in lines}
+    scenario.grid_tiles, scenario.zone_tiles = _parse_map(
+        data.get("map", {}),
+        node_id_set,
+        line_id_set,
+        generators,
+        loads,
+    )
     return scenario
 
 
